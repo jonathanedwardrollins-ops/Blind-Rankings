@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlindRank Live</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <div class="container">
+        <header>
+          <div>
+            <div class="brand">BlindRank Live</div>
+            <div class="badge">Real-Time Party Rankings</div>
+          </div>
+          <button id="resetButton" class="ghost">Reset Session</button>
+        </header>
+
+        <section id="screen-welcome" class="card fade-in">
+          <h2>Start a blind ranking room</h2>
+          <p>Players rank each reveal immediately. No peeking ahead.</p>
+          <div class="grid two">
+            <div>
+              <label for="playerName">Your name</label>
+              <input id="playerName" placeholder="Alex" />
+            </div>
+            <div>
+              <label for="roomCode">Room code (join)</label>
+              <input id="roomCode" placeholder="AB12" maxlength="6" />
+            </div>
+          </div>
+          <div class="grid two" style="margin-top: 18px;">
+            <div>
+              <label for="topicSelect">Pick a topic (host)</label>
+              <select id="topicSelect"></select>
+            </div>
+            <div style="display:flex; gap:12px; align-items:flex-end;">
+              <button id="createRoom">Create Room</button>
+              <button id="joinRoom" class="secondary">Join Room</button>
+            </div>
+          </div>
+          <div id="welcomeError" class="notice hidden" style="margin-top: 16px;"></div>
+        </section>
+
+        <section id="screen-lobby" class="card hidden">
+          <h2>Lobby</h2>
+          <p>Share the room code and wait for everyone to join.</p>
+          <div class="room-code" id="lobbyCode"></div>
+          <div class="pill-list" id="playerList"></div>
+          <div class="notice" id="lobbyNotice"></div>
+          <button id="startGame" style="margin-top:16px;">Start Round</button>
+        </section>
+
+        <section id="screen-game" class="grid two hidden">
+          <div class="card">
+            <h2 id="topicTitle">Topic</h2>
+            <div class="timer" id="roundTimer">00</div>
+            <p>Current reveal</p>
+            <div class="current-item" id="currentItem">---</div>
+            <div id="submitArea" style="margin-top: 16px;">
+              <p>Pick a slot (1-10) for this item:</p>
+              <div class="rank-grid" id="rankSlots"></div>
+              <button id="submitChoice" style="margin-top: 16px;">Lock In Placement</button>
+              <div id="submitStatus" class="notice hidden" style="margin-top: 12px;"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Your ranking</h2>
+            <p>Once placed, positions are locked.</p>
+            <div class="player-ranks" id="playerRanking"></div>
+          </div>
+        </section>
+
+        <section id="screen-results" class="card hidden">
+          <h2>Final Rankings</h2>
+          <p>Compare every player list and the reveal order.</p>
+          <div class="notice" id="revealOrder"></div>
+          <div class="results-grid" id="resultsGrid" style="margin-top:16px;"></div>
+        </section>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
