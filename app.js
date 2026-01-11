@@ -234,6 +234,7 @@ function renderRoom() {
     lastRoundKey = null;
     if (tutorialInterval) clearInterval(tutorialInterval);
     tutorialInterval = null;
+    hideTutorial();
     lobbyCode.textContent = currentRoom.code;
     playerList.innerHTML = "";
     players.forEach((player) => {
@@ -258,6 +259,8 @@ function renderRoom() {
   if (currentRoom.status === "in_round") {
     showScreen("game");
     hideTutorial();
+    if (tutorialInterval) clearInterval(tutorialInterval);
+    tutorialInterval = null;
     renderGame();
   }
 
@@ -268,6 +271,7 @@ function renderRoom() {
     lastRoundKey = null;
     if (tutorialInterval) clearInterval(tutorialInterval);
     tutorialInterval = null;
+    hideTutorial();
     renderResults();
   }
 }
@@ -739,6 +743,8 @@ function updateTutorialTimer() {
   const endsAt = currentRoom.tutorialEndsAt || Date.now() + 20000;
 
   if (tutorialInterval) clearInterval(tutorialInterval);
+  const initialRemaining = Math.max(0, endsAt - Date.now());
+  tutorialCountdown.textContent = String(Math.ceil(initialRemaining / 1000));
   tutorialInterval = setInterval(() => {
     const remaining = Math.max(0, endsAt - Date.now());
     const seconds = Math.ceil(remaining / 1000);
