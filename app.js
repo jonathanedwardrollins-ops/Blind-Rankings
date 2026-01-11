@@ -42,6 +42,8 @@ const submitStatus = document.getElementById("submitStatus");
 const playerRanking = document.getElementById("playerRanking");
 const resultsGrid = document.getElementById("resultsGrid");
 const revealOrder = document.getElementById("revealOrder");
+const scoreboard = document.getElementById("scoreboard");
+const answersTable = document.getElementById("answersTable");
 const resetButton = document.getElementById("resetButton");
 
 const ROUND_MS = 20000;
@@ -258,15 +260,19 @@ function renderGame() {
   topicTitle.textContent = topic.name;
   const currentIndex = currentRoom.currentIndex;
   const currentItem = currentRoom.order[currentIndex];
-  currentItemEl.textContent = currentItem || "---";
+  currentItemEl.textContent = currentItem || "Waiting for reveal...";
 
   const me = players.find((player) => player.id === playerId);
   const myRanking = me ? me.ranking || [] : [];
 
-  renderRankSlots(myRanking, currentItem);
+  if (currentItem) {
+    renderRankSlots(myRanking, currentItem);
+  } else {
+    rankSlots.innerHTML = "";
+  }
   renderPlayerRanking(myRanking);
 
-  const alreadyPlaced = myRanking.includes(currentItem);
+  const alreadyPlaced = currentItem ? myRanking.includes(currentItem) : false;
   submitChoiceBtn.disabled = alreadyPlaced;
   if (alreadyPlaced) {
     submitStatus.textContent = "Locked in. Waiting for others...";
@@ -276,7 +282,7 @@ function renderGame() {
   }
 
   updateTimer();
-  checkAdvance(currentItem);
+  void checkAdvance(currentItem);
 }
 
 function renderRankSlots(myRanking, currentItem) {
@@ -326,8 +332,14 @@ function renderPlayerRanking(myRanking) {
 
 function renderResults() {
   resultsGrid.innerHTML = "";
+  const topic = topicMap[currentRoom.topicId];
   const order = currentRoom.order || [];
   revealOrder.textContent = `Reveal order: ${order.join(" \u2192 ")}`;
+
+  if (topic) {
+    renderScoreboard(topic);
+    renderAnswersTable(topic);
+  }
 
   players.forEach((player) => {
     const card = document.createElement("div");
@@ -354,6 +366,88 @@ function renderResults() {
   });
 }
 
+function renderScoreboard(topic) {
+  scoreboard.innerHTML = "";
+  const scores = players.map((player) => ({
+    id: player.id,
+    name: player.name,
+    points: calculatePlayerScore(player, topic)
+  }));
+
+  scores.sort((a, b) => a.points - b.points);
+
+  const title = document.createElement("h3");
+  title.textContent = "Scoreboard (lowest points wins)";
+  scoreboard.appendChild(title);
+
+  scores.forEach((entry, index) => {
+    const row = document.createElement("div");
+    row.className = "score-row";
+    const name = document.createElement("div");
+    name.innerHTML = `<span class=\"score-rank\">#${index + 1}</span>${entry.name}`;
+    const points = document.createElement("div");
+    points.textContent = `${entry.points} pts`;
+    row.appendChild(name);
+    row.appendChild(points);
+    scoreboard.appendChild(row);
+  });
+}
+
+function renderAnswersTable(topic) {
+  answersTable.innerHTML = "";
+  const title = document.createElement("h3");
+  title.textContent = "Actual Answers vs Player Guesses";
+  answersTable.appendChild(title);
+
+  const table = document.createElement("table");
+  table.className = "answers-table";
+  const header = document.createElement("tr");
+  ["Rank", "Answer", ...players.map((player) => player.name)].forEach((label) => {
+    const th = document.createElement("th");
+    th.textContent = label;
+    header.appendChild(th);
+  });
+  const thead = document.createElement("thead");
+  thead.appendChild(header);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  topic.items.forEach((item, index) => {
+    const row = document.createElement("tr");
+    const rankCell = document.createElement("td");
+    rankCell.textContent = String(index + 1);
+    const itemCell = document.createElement("td");
+    itemCell.textContent = item;
+    row.appendChild(rankCell);
+    row.appendChild(itemCell);
+
+    players.forEach((player) => {
+      const guessCell = document.createElement("td");
+      const guessIndex = (player.ranking || []).indexOf(item);
+      guessCell.textContent = guessIndex >= 0 ? String(guessIndex + 1) : "-";
+      row.appendChild(guessCell);
+    });
+    tbody.appendChild(row);
+  });
+  table.appendChild(tbody);
+  answersTable.appendChild(table);
+}
+
+function calculatePlayerScore(player, topic) {
+  const actualMap = new Map();
+  topic.items.forEach((item, index) => actualMap.set(item, index));
+  let points = 0;
+  topic.items.forEach((item) => {
+    const actualIndex = actualMap.get(item);
+    let guessedIndex = (player.ranking || []).indexOf(item);
+    if (guessedIndex < 0) {
+      guessedIndex = topic.items.length - 1;
+    }
+    points += Math.abs(guessedIndex - actualIndex);
+  });
+  return points;
+}
+
 function updateTimer() {
   if (!currentRoom.roundEndsAt) {
     roundTimer.textContent = "20";
@@ -369,7 +463,7 @@ function updateTimer() {
     const seconds = Math.ceil(remaining / 1000);
     roundTimer.textContent = String(seconds).padStart(2, "0");
     if (remaining <= 0) {
-      checkAdvance(currentRoom.order[currentRoom.currentIndex]);
+      void checkAdvance(currentRoom.order[currentRoom.currentIndex]);
     }
   }, 200);
 }
@@ -410,6 +504,28 @@ function allPlayersSubmitted(currentItem) {
   return players.length > 0 && players.every((player) => (player.ranking || []).includes(currentItem));
 }
 
+async function autoAssignMissing(currentItem) {
+  if (!currentRoom || !currentItem) return;
+  const updates = players
+    .filter((player) => !(player.ranking || []).includes(currentItem))
+    .map((player) =>
+      runTransaction(db, async (transaction) => {
+        const ref = playerRef(currentRoom.code, player.id);
+        const snapshot = await transaction.get(ref);
+        if (!snapshot.exists()) return;
+        const data = snapshot.data();
+        const ranking = Array.isArray(data.ranking) ? [...data.ranking] : [];
+        if (ranking.includes(currentItem)) return;
+        const emptyIndex = ranking.indexOf(null);
+        if (emptyIndex === -1) return;
+        ranking[emptyIndex] = currentItem;
+        transaction.update(ref, { ranking });
+      })
+    );
+
+  await Promise.all(updates);
+}
+
 async function advanceRound() {
   if (advanceInFlight || !currentRoom) return;
   advanceInFlight = true;
@@ -442,11 +558,18 @@ async function advanceRound() {
   }
 }
 
-function checkAdvance(currentItem) {
+async function checkAdvance(currentItem) {
   if (!currentRoom || currentRoom.status !== "in_round") return;
+  if (!isHost) return;
+  if (advanceInFlight) return;
   const remaining = currentRoom.roundEndsAt ? currentRoom.roundEndsAt - Date.now() : 0;
-  if (remaining <= 0 || allPlayersSubmitted(currentItem)) {
-    advanceRound();
+  if (remaining <= 0) {
+    await autoAssignMissing(currentItem);
+    await advanceRound();
+    return;
+  }
+  if (allPlayersSubmitted(currentItem)) {
+    await advanceRound();
   }
 }
 

@@ -267,6 +267,70 @@ button:disabled {
   gap: 16px;
 }
 
+.scoreboard {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border: 1px solid #eadfd2;
+}
+
+.scoreboard h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1e7db;
+  font-size: 15px;
+}
+
+.score-row:last-child {
+  border-bottom: none;
+}
+
+.score-rank {
+  font-weight: 700;
+  color: var(--accent-dark);
+  margin-right: 10px;
+}
+
+.answers {
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border: 1px solid #eadfd2;
+}
+
+.answers h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.answers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.answers-table th,
+.answers-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1e7db;
+  text-align: left;
+  vertical-align: top;
+}
+
+.answers-table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6b5f57;
+}
+
 .player-card {
   background: #fff;
   border-radius: var(--radius-sm);
