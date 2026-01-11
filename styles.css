@@ -231,6 +231,7 @@ button:disabled {
   justify-content: center;
   text-align: center;
   font-size: 14px;
+  color: #6b5f57;
 }
 
 .rank-slot.available {
@@ -247,6 +248,7 @@ button:disabled {
   color: var(--accent-dark);
   background: #fff2ec;
   box-shadow: 0 0 0 3px rgba(255, 122, 89, 0.2);
+  font-weight: 600;
 }
 
 .fade-in {

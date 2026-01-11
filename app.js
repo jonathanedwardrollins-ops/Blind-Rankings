@@ -564,7 +564,7 @@ async function autoAssignMissing(currentItem) {
         const data = snapshot.data();
         const ranking = normalizeRanking(data.ranking, totalSlots);
         if (ranking.includes(currentItem)) return;
-        const emptyIndex = ranking.indexOf(null);
+        const emptyIndex = ranking.lastIndexOf(null);
         if (emptyIndex === -1) return;
         ranking[emptyIndex] = currentItem;
         transaction.update(ref, { ranking });
