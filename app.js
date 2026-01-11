@@ -349,7 +349,8 @@ function renderResults() {
   resultsGrid.innerHTML = "";
   const topic = topicMap[currentRoom.topicId];
   const order = currentRoom.order || [];
-  revealOrder.textContent = `Reveal order: ${order.join(" \u2192 ")}`;
+  revealOrder.textContent = "";
+  revealOrder.classList.add("hidden");
 
   if (topic) {
     renderScoreboard(topic);
