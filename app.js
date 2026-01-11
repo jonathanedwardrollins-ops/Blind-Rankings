@@ -550,9 +550,21 @@ function updateTimer() {
     const seconds = Math.ceil(remaining / 1000);
     roundTimer.textContent = String(seconds).padStart(2, "0");
     if (remaining <= 0) {
+      void autoLockSelected();
       void checkAdvance(currentRoom.order[currentRoom.currentIndex]);
     }
   }, 200);
+}
+
+async function autoLockSelected() {
+  if (!currentRoom) return;
+  const currentItem = currentRoom.order[currentRoom.currentIndex];
+  if (!currentItem || selectedSlot === null) return;
+  const me = players.find((player) => player.id === playerId);
+  const topic = topicMap[currentRoom.topicId];
+  const normalized = normalizeRanking(me ? me.ranking : [], topic ? topic.items.length : 0);
+  if (normalized.includes(currentItem)) return;
+  await submitChoice();
 }
 
 async function submitChoice() {
