@@ -2,6 +2,7 @@ export const topics = [
   {
     id: "meat-consumed",
     name: "Top 10 Meats Consumed (Worldwide)",
+    description: "Ranking by global consumption volume, not personal favorites.",
     items: [
       "Chicken",
       "Pork",
@@ -18,6 +19,7 @@ export const topics = [
   {
     id: "video-game-systems",
     name: "Top 10 Grossing Video Game Systems",
+    description: "Ranking by total lifetime revenue from hardware sales, worldwide.",
     items: [
       "PlayStation 2",
       "Nintendo DS",
@@ -34,6 +36,7 @@ export const topics = [
   {
     id: "fast-food",
     name: "Top 10 Fast-Food Chains",
+    description: "Ranking by global systemwide sales (revenue), not store count.",
     items: [
       "McDonald's",
       "Subway",
@@ -50,6 +53,7 @@ export const topics = [
   {
     id: "blockbuster-movies",
     name: "Top 10 All-Time Box Office Movies",
+    description: "Ranking by worldwide box office gross (unadjusted).",
     items: [
       "Avatar",
       "Avengers: Endgame",

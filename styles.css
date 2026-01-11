@@ -214,6 +214,12 @@ button:disabled {
   font-weight: 700;
 }
 
+.topic-detail {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b5f57;
+}
+
 .rank-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -333,6 +339,205 @@ button:disabled {
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #6b5f57;
+}
+
+.tutorial {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 28, 27, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.tutorial-card {
+  width: min(920px, 100%);
+  background: #fffaf3;
+  border-radius: 28px;
+  padding: 28px 30px 22px;
+  box-shadow: 0 20px 50px rgba(31, 28, 27, 0.2);
+  animation: popIn 0.4s ease;
+}
+
+.tutorial-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tutorial-title {
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.tutorial-subtitle {
+  color: #6b5f57;
+  margin-top: 4px;
+}
+
+.tutorial-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.tutorial-step {
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid #f1e3d3;
+  animation: floatUp 0.6s ease both;
+}
+
+.tutorial-step:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.tutorial-step:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.tutorial-step h3 {
+  margin: 12px 0 8px;
+  font-size: 16px;
+}
+
+.tutorial-step p {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.step-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.step-demo {
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff2ec;
+  color: var(--accent-dark);
+  font-weight: 700;
+  border: 1px dashed #ffc5a5;
+}
+
+.step-demo.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.step-demo.slide {
+  position: relative;
+  overflow: hidden;
+}
+
+.step-demo.slide::after {
+  content: "Place";
+  position: absolute;
+  right: 10px;
+  font-size: 12px;
+  color: #8e6c5c;
+  animation: slideIn 1.6s ease-in-out infinite;
+}
+
+.step-demo.timer-demo {
+  background: #ffe4d8;
+  color: var(--accent-dark);
+  animation: tick 1s steps(2, end) infinite;
+}
+
+.tutorial-footer {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  color: #6b5f57;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes floatUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    transform: translateX(18px);
+    opacity: 0;
+  }
+  40%,
+  70% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(18px);
+    opacity: 0;
+  }
+}
+
+@keyframes tick {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+}
+
+@media (max-width: 720px) {
+  .tutorial-card {
+    padding: 20px;
+  }
+
+  .tutorial-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .player-card {

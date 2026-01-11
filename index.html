@@ -64,6 +64,7 @@
             <div class="timer" id="roundTimer">00</div>
             <p>Current reveal</p>
             <div class="current-item" id="currentItem">---</div>
+            <div class="topic-detail" id="topicDetail"></div>
             <div id="submitArea" style="margin-top: 16px;">
               <p>Pick a slot (1-10) for this item:</p>
               <div class="rank-grid" id="rankSlots"></div>
@@ -88,6 +89,42 @@
       </div>
     </div>
 
-    <script type="module" src="app.js?v=4"></script>
+    <div id="tutorialOverlay" class="tutorial hidden">
+      <div class="tutorial-card">
+        <div class="tutorial-header">
+          <div>
+            <div class="tutorial-title">How to Play</div>
+            <div class="tutorial-subtitle">Blind ranking in 3 fast steps.</div>
+          </div>
+          <button id="tutorialClose" class="secondary">Got it</button>
+        </div>
+        <div class="tutorial-steps">
+          <div class="tutorial-step">
+            <div class="step-badge">1</div>
+            <h3>One reveal at a time</h3>
+            <p>Everyone sees the same item. No peeking ahead.</p>
+            <div class="step-demo pulse">Reveal</div>
+          </div>
+          <div class="tutorial-step">
+            <div class="step-badge">2</div>
+            <h3>Lock a slot (1-10)</h3>
+            <p>Pick a rank immediately. Once placed, it is locked.</p>
+            <div class="step-demo slide">#6</div>
+          </div>
+          <div class="tutorial-step">
+            <div class="step-badge">3</div>
+            <h3>Beat the timer</h3>
+            <p>20 seconds max. If you wait, your pick auto-locks.</p>
+            <div class="step-demo timer-demo">20s</div>
+          </div>
+        </div>
+        <div class="tutorial-footer">
+          <span>Lowest total points wins.</span>
+          <button id="tutorialReplay" class="ghost">Replay Later</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="app.js?v=6"></script>
   </body>
 </html>

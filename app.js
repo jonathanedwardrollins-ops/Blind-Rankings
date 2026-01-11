@@ -36,6 +36,7 @@ const startGameBtn = document.getElementById("startGame");
 const topicTitle = document.getElementById("topicTitle");
 const roundTimer = document.getElementById("roundTimer");
 const currentItemEl = document.getElementById("currentItem");
+const topicDetail = document.getElementById("topicDetail");
 const rankSlots = document.getElementById("rankSlots");
 const submitChoiceBtn = document.getElementById("submitChoice");
 const submitStatus = document.getElementById("submitStatus");
@@ -45,6 +46,9 @@ const revealOrder = document.getElementById("revealOrder");
 let scoreboard = document.getElementById("scoreboard");
 let answersTable = document.getElementById("answersTable");
 const resetButton = document.getElementById("resetButton");
+const tutorialOverlay = document.getElementById("tutorialOverlay");
+const tutorialClose = document.getElementById("tutorialClose");
+const tutorialReplay = document.getElementById("tutorialReplay");
 
 const ROUND_MS = 20000;
 
@@ -242,6 +246,7 @@ function renderRoom() {
 
   if (currentRoom.status === "in_round") {
     showScreen("game");
+    maybeShowTutorial();
     renderGame();
   }
 
@@ -259,6 +264,9 @@ function renderGame() {
   if (!topic) return;
 
   topicTitle.textContent = topic.name;
+  if (topicDetail) {
+    topicDetail.textContent = topic.description || "";
+  }
   const currentIndex = currentRoom.currentIndex;
   const currentItem = currentRoom.order[currentIndex];
   if (currentItem !== lastItemToken) {
@@ -699,11 +707,31 @@ function resetSession() {
   showScreen("welcome");
 }
 
+function tutorialKey() {
+  if (!roomCode || !currentRoom) return null;
+  return `br_tutorial_${roomCode}`;
+}
+
+function maybeShowTutorial() {
+  if (!tutorialOverlay || currentRoom.currentIndex !== 0) return;
+  const key = tutorialKey();
+  if (key && sessionStorage.getItem(key)) return;
+  tutorialOverlay.classList.remove("hidden");
+  if (key) sessionStorage.setItem(key, "shown");
+}
+
+function hideTutorial() {
+  if (!tutorialOverlay) return;
+  tutorialOverlay.classList.add("hidden");
+}
+
 createRoomBtn.addEventListener("click", createRoom);
 joinRoomBtn.addEventListener("click", joinRoom);
 startGameBtn.addEventListener("click", startGame);
 submitChoiceBtn.addEventListener("click", submitChoice);
 resetButton.addEventListener("click", resetSession);
+tutorialClose?.addEventListener("click", hideTutorial);
+tutorialReplay?.addEventListener("click", hideTutorial);
 roomCodeInput.addEventListener("input", (event) => {
   event.target.value = sanitizeCode(event.target.value);
 });
