@@ -42,8 +42,8 @@ const submitStatus = document.getElementById("submitStatus");
 const playerRanking = document.getElementById("playerRanking");
 const resultsGrid = document.getElementById("resultsGrid");
 const revealOrder = document.getElementById("revealOrder");
-const scoreboard = document.getElementById("scoreboard");
-const answersTable = document.getElementById("answersTable");
+let scoreboard = document.getElementById("scoreboard");
+let answersTable = document.getElementById("answersTable");
 const resetButton = document.getElementById("resetButton");
 
 const ROUND_MS = 20000;
@@ -59,6 +59,7 @@ let playersUnsub = null;
 let timerInterval = null;
 let lastRoundKey = null;
 let advanceInFlight = false;
+let lastItemToken = null;
 
 const storedPlayer = localStorage.getItem("br_player_id");
 playerId = storedPlayer || crypto.randomUUID();
@@ -260,10 +261,14 @@ function renderGame() {
   topicTitle.textContent = topic.name;
   const currentIndex = currentRoom.currentIndex;
   const currentItem = currentRoom.order[currentIndex];
+  if (currentItem !== lastItemToken) {
+    selectedSlot = null;
+    lastItemToken = currentItem;
+  }
   currentItemEl.textContent = currentItem || "Waiting for reveal...";
 
   const me = players.find((player) => player.id === playerId);
-  const myRanking = me ? me.ranking || [] : [];
+  const myRanking = normalizeRanking(me ? me.ranking : [], topic.items.length);
 
   if (currentItem) {
     renderRankSlots(myRanking, currentItem);
@@ -287,27 +292,33 @@ function renderGame() {
 
 function renderRankSlots(myRanking, currentItem) {
   rankSlots.innerHTML = "";
-  selectedSlot = null;
 
   myRanking.forEach((item, index) => {
     const slot = document.createElement("button");
     slot.type = "button";
     slot.className = "rank-slot";
-    slot.textContent = item ? `#${index + 1} ${item}` : `#${index + 1}`;
+    const isSelected = selectedSlot === index && !item && currentItem;
+    if (item) {
+      slot.textContent = `#${index + 1} ${item}`;
+    } else if (isSelected) {
+      slot.textContent = `#${index + 1} ${currentItem}`;
+    } else {
+      slot.textContent = `#${index + 1}`;
+    }
 
     if (item) {
       slot.classList.add("filled");
       slot.disabled = true;
     } else {
       slot.classList.add("available");
+      if (isSelected) {
+        slot.classList.add("selected");
+      }
       slot.addEventListener("click", () => {
         if (!currentItem) return;
         if (myRanking.includes(currentItem)) return;
         selectedSlot = index;
-        document.querySelectorAll(".rank-slot").forEach((node) => {
-          node.classList.remove("selected");
-        });
-        slot.classList.add("selected");
+        renderRankSlots(myRanking, currentItem);
       });
     }
 
@@ -331,6 +342,7 @@ function renderPlayerRanking(myRanking) {
 }
 
 function renderResults() {
+  ensureResultsContainers();
   resultsGrid.innerHTML = "";
   const topic = topicMap[currentRoom.topicId];
   const order = currentRoom.order || [];
@@ -350,7 +362,8 @@ function renderResults() {
 
     const ranks = document.createElement("div");
     ranks.className = "player-ranks";
-    (player.ranking || []).forEach((item, index) => {
+    const normalized = normalizeRanking(player.ranking, topic ? topic.items.length : 0);
+    normalized.forEach((item, index) => {
       const row = document.createElement("div");
       row.className = "player-rank";
       const num = document.createElement("span");
@@ -364,6 +377,27 @@ function renderResults() {
     card.appendChild(ranks);
     resultsGrid.appendChild(card);
   });
+}
+
+function ensureResultsContainers() {
+  const resultsSection = document.getElementById("screen-results");
+  if (!resultsSection) return;
+
+  if (!scoreboard) {
+    scoreboard = document.createElement("div");
+    scoreboard.id = "scoreboard";
+    scoreboard.className = "scoreboard";
+    scoreboard.style.marginTop = "16px";
+    resultsSection.insertBefore(scoreboard, resultsGrid);
+  }
+
+  if (!answersTable) {
+    answersTable = document.createElement("div");
+    answersTable.id = "answersTable";
+    answersTable.className = "answers";
+    answersTable.style.marginTop = "20px";
+    resultsSection.insertBefore(answersTable, resultsGrid);
+  }
 }
 
 function renderScoreboard(topic) {
@@ -423,7 +457,8 @@ function renderAnswersTable(topic) {
 
     players.forEach((player) => {
       const guessCell = document.createElement("td");
-      const guessIndex = (player.ranking || []).indexOf(item);
+      const normalized = normalizeRanking(player.ranking, topic.items.length);
+      const guessIndex = normalized.indexOf(item);
       guessCell.textContent = guessIndex >= 0 ? String(guessIndex + 1) : "-";
       row.appendChild(guessCell);
     });
@@ -436,16 +471,25 @@ function renderAnswersTable(topic) {
 function calculatePlayerScore(player, topic) {
   const actualMap = new Map();
   topic.items.forEach((item, index) => actualMap.set(item, index));
+  const normalized = normalizeRanking(player.ranking, topic.items.length);
   let points = 0;
   topic.items.forEach((item) => {
     const actualIndex = actualMap.get(item);
-    let guessedIndex = (player.ranking || []).indexOf(item);
+    let guessedIndex = normalized.indexOf(item);
     if (guessedIndex < 0) {
       guessedIndex = topic.items.length - 1;
     }
     points += Math.abs(guessedIndex - actualIndex);
   });
   return points;
+}
+
+function normalizeRanking(ranking, length) {
+  const normalized = Array.isArray(ranking) ? [...ranking] : [];
+  while (normalized.length < length) {
+    normalized.push(null);
+  }
+  return normalized.slice(0, length);
 }
 
 function updateTimer() {
@@ -473,14 +517,16 @@ async function submitChoice() {
   const currentItem = currentRoom.order[currentRoom.currentIndex];
   const me = players.find((player) => player.id === playerId);
   if (!me || !currentItem) return;
-  if (me.ranking.includes(currentItem)) return;
+  const topic = topicMap[currentRoom.topicId];
+  const normalized = normalizeRanking(me.ranking, topic ? topic.items.length : 0);
+  if (normalized.includes(currentItem)) return;
   if (selectedSlot === null) {
     submitStatus.textContent = "Choose a slot before locking in.";
     submitStatus.classList.remove("hidden");
     return;
   }
 
-  const updatedRanking = [...me.ranking];
+  const updatedRanking = normalizeRanking(me.ranking, topic ? topic.items.length : 0);
   updatedRanking[selectedSlot] = currentItem;
   await updateDoc(playerRef(currentRoom.code, playerId), {
     ranking: updatedRanking
@@ -506,6 +552,8 @@ function allPlayersSubmitted(currentItem) {
 
 async function autoAssignMissing(currentItem) {
   if (!currentRoom || !currentItem) return;
+  const topic = topicMap[currentRoom.topicId];
+  const totalSlots = topic ? topic.items.length : 0;
   const updates = players
     .filter((player) => !(player.ranking || []).includes(currentItem))
     .map((player) =>
@@ -514,7 +562,7 @@ async function autoAssignMissing(currentItem) {
         const snapshot = await transaction.get(ref);
         if (!snapshot.exists()) return;
         const data = snapshot.data();
-        const ranking = Array.isArray(data.ranking) ? [...data.ranking] : [];
+        const ranking = normalizeRanking(data.ranking, totalSlots);
         if (ranking.includes(currentItem)) return;
         const emptyIndex = ranking.indexOf(null);
         if (emptyIndex === -1) return;
