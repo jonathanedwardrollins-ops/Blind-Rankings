@@ -49,6 +49,7 @@ const resetButton = document.getElementById("resetButton");
 const tutorialOverlay = document.getElementById("tutorialOverlay");
 const tutorialClose = document.getElementById("tutorialClose");
 const tutorialReplay = document.getElementById("tutorialReplay");
+const tutorialCountdown = document.getElementById("tutorialCountdown");
 
 const ROUND_MS = 20000;
 
@@ -64,6 +65,7 @@ let timerInterval = null;
 let lastRoundKey = null;
 let advanceInFlight = false;
 let lastItemToken = null;
+let tutorialInterval = null;
 
 const storedPlayer = localStorage.getItem("br_player_id");
 playerId = storedPlayer || crypto.randomUUID();
@@ -230,6 +232,8 @@ function renderRoom() {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
     lastRoundKey = null;
+    if (tutorialInterval) clearInterval(tutorialInterval);
+    tutorialInterval = null;
     lobbyCode.textContent = currentRoom.code;
     playerList.innerHTML = "";
     players.forEach((player) => {
@@ -244,9 +248,16 @@ function renderRoom() {
     startGameBtn.disabled = !isHost;
   }
 
+  if (currentRoom.status === "tutorial") {
+    showScreen("game");
+    showTutorial();
+    updateTutorialTimer();
+    renderGame();
+  }
+
   if (currentRoom.status === "in_round") {
     showScreen("game");
-    maybeShowTutorial();
+    hideTutorial();
     renderGame();
   }
 
@@ -255,6 +266,8 @@ function renderRoom() {
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
     lastRoundKey = null;
+    if (tutorialInterval) clearInterval(tutorialInterval);
+    tutorialInterval = null;
     renderResults();
   }
 }
@@ -577,6 +590,7 @@ async function autoLockSelected() {
 
 async function submitChoice() {
   if (!currentRoom) return;
+  if (currentRoom.status !== "in_round") return;
   const currentItem = currentRoom.order[currentRoom.currentIndex];
   const me = players.find((player) => player.id === playerId);
   if (!me || !currentItem) return;
@@ -604,9 +618,10 @@ async function submitChoice() {
 async function startGame() {
   if (!currentRoom || !isHost) return;
   await updateDoc(roomRef(currentRoom.code), {
-    status: "in_round",
-    currentIndex: 0,
-    roundEndsAt: Date.now() + ROUND_MS
+    status: "tutorial",
+    currentIndex: -1,
+    roundEndsAt: null,
+    tutorialEndsAt: Date.now() + 20000
   });
 }
 
@@ -701,28 +716,46 @@ function resetSession() {
   if (roomUnsub) roomUnsub();
   if (playersUnsub) playersUnsub();
   if (timerInterval) clearInterval(timerInterval);
+  if (tutorialInterval) clearInterval(tutorialInterval);
   currentRoom = null;
   players = [];
   roomCode = null;
   showScreen("welcome");
 }
 
-function tutorialKey() {
-  if (!roomCode || !currentRoom) return null;
-  return `br_tutorial_${roomCode}`;
-}
-
-function maybeShowTutorial() {
-  if (!tutorialOverlay || currentRoom.currentIndex !== 0) return;
-  const key = tutorialKey();
-  if (key && sessionStorage.getItem(key)) return;
+function showTutorial() {
+  if (!tutorialOverlay) return;
   tutorialOverlay.classList.remove("hidden");
-  if (key) sessionStorage.setItem(key, "shown");
 }
 
 function hideTutorial() {
   if (!tutorialOverlay) return;
   tutorialOverlay.classList.add("hidden");
+}
+
+function updateTutorialTimer() {
+  if (!currentRoom || !tutorialCountdown) return;
+  if (currentRoom.status !== "tutorial") return;
+  const endsAt = currentRoom.tutorialEndsAt || Date.now() + 20000;
+
+  if (tutorialInterval) clearInterval(tutorialInterval);
+  tutorialInterval = setInterval(() => {
+    const remaining = Math.max(0, endsAt - Date.now());
+    const seconds = Math.ceil(remaining / 1000);
+    tutorialCountdown.textContent = String(seconds);
+    if (remaining <= 0) {
+      if (tutorialInterval) clearInterval(tutorialInterval);
+      tutorialInterval = null;
+      if (isHost) {
+        updateDoc(roomRef(currentRoom.code), {
+          status: "in_round",
+          currentIndex: 0,
+          roundEndsAt: Date.now() + ROUND_MS,
+          tutorialEndsAt: null
+        }).catch(() => {});
+      }
+    }
+  }, 200);
 }
 
 createRoomBtn.addEventListener("click", createRoom);
