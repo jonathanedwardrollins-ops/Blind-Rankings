@@ -505,6 +505,11 @@ function setSelectedSlot(index, item) {
   selectedSlot = index;
   const key = selectionKey(item);
   if (key) sessionStorage.setItem(key, String(index));
+  if (currentRoom && item) {
+    updateDoc(playerRef(currentRoom.code, playerId), {
+      pendingSelection: index
+    }).catch(() => {});
+  }
 }
 
 function loadSelectedSlot(item) {
@@ -523,6 +528,11 @@ function clearSelectedSlot(item) {
   selectedSlot = null;
   const key = selectionKey(item);
   if (key) sessionStorage.removeItem(key);
+  if (currentRoom && item) {
+    updateDoc(playerRef(currentRoom.code, playerId), {
+      pendingSelection: null
+    }).catch(() => {});
+  }
 }
 
 function updateTimer() {
@@ -562,7 +572,8 @@ async function submitChoice() {
   const updatedRanking = normalizeRanking(me.ranking, topic ? topic.items.length : 0);
   updatedRanking[selectedSlot] = currentItem;
   await updateDoc(playerRef(currentRoom.code, playerId), {
-    ranking: updatedRanking
+    ranking: updatedRanking,
+    pendingSelection: null
   });
 
   clearSelectedSlot(currentItem);
@@ -598,10 +609,19 @@ async function autoAssignMissing(currentItem) {
         const data = snapshot.data();
         const ranking = normalizeRanking(data.ranking, totalSlots);
         if (ranking.includes(currentItem)) return;
-        const emptyIndex = ranking.lastIndexOf(null);
+        let emptyIndex = -1;
+        if (Number.isInteger(data.pendingSelection)) {
+          const candidate = data.pendingSelection;
+          if (candidate >= 0 && candidate < ranking.length && ranking[candidate] === null) {
+            emptyIndex = candidate;
+          }
+        }
+        if (emptyIndex === -1) {
+          emptyIndex = ranking.lastIndexOf(null);
+        }
         if (emptyIndex === -1) return;
         ranking[emptyIndex] = currentItem;
-        transaction.update(ref, { ranking });
+        transaction.update(ref, { ranking, pendingSelection: null });
       })
     );
 
