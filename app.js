@@ -262,8 +262,11 @@ function renderGame() {
   const currentIndex = currentRoom.currentIndex;
   const currentItem = currentRoom.order[currentIndex];
   if (currentItem !== lastItemToken) {
-    selectedSlot = null;
+    clearSelectedSlot(lastItemToken);
     lastItemToken = currentItem;
+  }
+  if (currentItem) {
+    loadSelectedSlot(currentItem);
   }
   currentItemEl.textContent = currentItem || "Waiting for reveal...";
 
@@ -301,7 +304,7 @@ function renderRankSlots(myRanking, currentItem) {
     if (item) {
       slot.textContent = `#${index + 1} ${item}`;
     } else if (isSelected) {
-      slot.textContent = `#${index + 1} ${currentItem}`;
+      slot.textContent = `#${index + 1}`;
     } else {
       slot.textContent = `#${index + 1}`;
     }
@@ -317,7 +320,7 @@ function renderRankSlots(myRanking, currentItem) {
       slot.addEventListener("click", () => {
         if (!currentItem) return;
         if (myRanking.includes(currentItem)) return;
-        selectedSlot = index;
+        setSelectedSlot(index, currentItem);
         renderRankSlots(myRanking, currentItem);
       });
     }
@@ -492,6 +495,35 @@ function normalizeRanking(ranking, length) {
   return normalized.slice(0, length);
 }
 
+function selectionKey(item) {
+  if (!item || !roomCode) return null;
+  return `br_selected_${roomCode}_${item}`;
+}
+
+function setSelectedSlot(index, item) {
+  selectedSlot = index;
+  const key = selectionKey(item);
+  if (key) sessionStorage.setItem(key, String(index));
+}
+
+function loadSelectedSlot(item) {
+  if (selectedSlot !== null) return;
+  const key = selectionKey(item);
+  if (!key) return;
+  const stored = sessionStorage.getItem(key);
+  if (stored === null) return;
+  const parsed = Number(stored);
+  if (Number.isInteger(parsed) && parsed >= 0) {
+    selectedSlot = parsed;
+  }
+}
+
+function clearSelectedSlot(item) {
+  selectedSlot = null;
+  const key = selectionKey(item);
+  if (key) sessionStorage.removeItem(key);
+}
+
 function updateTimer() {
   if (!currentRoom.roundEndsAt) {
     roundTimer.textContent = "20";
@@ -532,6 +564,7 @@ async function submitChoice() {
     ranking: updatedRanking
   });
 
+  clearSelectedSlot(currentItem);
   submitStatus.textContent = "Locked in. Waiting for others...";
   submitStatus.classList.remove("hidden");
 }

@@ -244,9 +244,9 @@ button:disabled {
 }
 
 .rank-slot.selected {
-  border-color: var(--accent);
-  color: var(--accent-dark);
-  background: #fff2ec;
+  border: 2px solid var(--accent-dark);
+  color: #fff;
+  background: var(--accent);
   box-shadow: 0 0 0 3px rgba(255, 122, 89, 0.2);
   font-weight: 600;
 }
