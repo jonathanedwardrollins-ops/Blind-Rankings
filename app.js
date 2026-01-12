@@ -777,6 +777,7 @@ roomCodeInput.addEventListener("input", (event) => {
 
 renderTopicOptions();
 showScreen("welcome");
+hideTutorial();
 
 const savedName = localStorage.getItem("br_player_name");
 const savedRoom = localStorage.getItem("br_room_code");

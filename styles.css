@@ -353,6 +353,10 @@ button:disabled {
   backdrop-filter: blur(6px);
 }
 
+.tutorial.hidden {
+  display: none;
+}
+
 .tutorial-card {
   width: min(920px, 100%);
   background: #fffaf3;
