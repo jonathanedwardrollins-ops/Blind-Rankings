@@ -35,3 +35,4 @@ service cloud.firestore {
 
 - Multiplayer sync uses Firestore snapshots. Any client can advance when the timer hits zero or everyone has submitted.
 - Room codes are 4 characters to keep joining quick.
+- Hosts can refresh without losing the room state.
